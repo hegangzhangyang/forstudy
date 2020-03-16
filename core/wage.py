@@ -319,10 +319,16 @@ class Wage(object):
                                                    "员工编号为{}的员工{}有病假，\n\r\t请输入其工龄".format(df_wage["员工编号"].at[i],
                                                                                          df_wage["姓名"].at[i]), min=0)
                     percent = floatReturnPercent(year)
+                    print(year,percent)
                     if ok:
                         df_wage["扣工资（病假）"].at[i] = ((df_wage["岗位工资"].at[i] + df_wage["技能保留工资"].at[i]
-                                                     + df_wage["年功保留工资"].at[i]) / self.workday * percent *
+                                                     + df_wage["年功保留工资"].at[i]) / 21.75 * percent *
                                                     df_wage["病假天数"].at[i]).round(2)
+                        print(((df_wage["岗位工资"].at[i] + df_wage["技能保留工资"].at[i]+ df_wage["年功保留工资"].at[i])))
+                        # print(df_wage["岗位工资"].at[i])
+                        # print(self.workday)
+                        # print(df_wage["病假天数"].at[i])
+                        # print(df_wage["扣工资（病假）"].at[i])
                         break
                     else:
                         QMessageBox.warning(self.window, "河钢乐亭薪酬管理系统", "取消后无法进行病假计算，请重新输入！", QMessageBox.Ok)
@@ -392,6 +398,7 @@ class Wage(object):
                           + df_wage["交通补贴"] + df_wage["误餐补贴"] + df_wage["通讯补贴"] + df_wage["异地津贴"] + df_wage["异地差旅费"] + \
                           df_wage["外租房津贴"] \
                           + df_wage["中班津贴"] + df_wage["夜班津贴"] - df_wage["扣工资（病假）"]
+
         # todo 这里有个问题，在计算产假和育儿假工资的时候计算应发还有问题，需要进一步查找问题所在
         """下面考虑一下最低工资标准的80%如何处理
         想法为：除了事假和旷工，其他的假都不能低于1900的80%，即1520.
@@ -401,10 +408,11 @@ class Wage(object):
 
         # 对应发工资进行判断，是否小于1520，同时要考虑只在这里交保险的人
         # 下面这个列表的人都是只在这边缴费的人，对于他们，不适用最低工资标准
-        list_need_check_all_pay = ["9000160", "90001302"]  # 这个列表是代交保险人员，以后如果需要增加还得手动从这里增加
+        list_need_check_all_pay = ["9000160", "9001302"]  # 这个列表是代交保险人员，以后如果需要增加还得手动从这里增加
         for i in df_wage.index:
             if not df_wage["员工编号"].at[i] in list_need_check_all_pay:
                 df_wage["应发工资"].at[i] = 1520 if df_wage["应发工资"].at[i] <= 1520 else df_wage["应发工资"].at[i]
+
 
         df_wage["其他补发"] = df_wage["其他补发"].round(2)
         df_wage["其他补扣"] = df_wage["其他补扣"].round(2)
@@ -462,7 +470,6 @@ class Wage(object):
 
     def wageDataCheck(self, df_wage):
         # 一、检查各项保险数值与社保系统中的数据是否相符
-        # todo
 
         float_endowment_insurance = df_wage["养老保险员工实缴"].sum().round(2)
         float_unemployement_insurance = df_wage["失业保险员工实缴"].sum().round(2)

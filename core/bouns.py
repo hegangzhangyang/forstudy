@@ -43,7 +43,6 @@ class Bouns(object):
 
         df_bouns_summary = pd.read_sql_query("select * from t{}SummaryBouns".format(self.date), self.conn)[
             ["员工编号", "应发奖金"]]
-        df_bouns_summary.to_excel("10.xlsx")
         df_bouns_extra = pd.read_sql_query("select * from t201911BounsExtra".format(self.date), self.conn)[
             ["员工编号", "其他补发", "其他补扣"]]
         df_return = pd.merge(df_bouns_summary, df_bouns_extra, on="员工编号", how="left")

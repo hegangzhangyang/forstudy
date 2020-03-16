@@ -152,5 +152,4 @@ def sumExcelFromPathAndToSql(input_path, str_input_to_sql_name, conn):
     """
     final = listGetExcelFullName(input_path)
     book = dfSumExcel(final)
-    book.to_excel("hahaha.xlsx")
     book.to_sql(str_input_to_sql_name, conn, if_exists="replace")
