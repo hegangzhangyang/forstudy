@@ -93,7 +93,6 @@ class Wage(object):
                 ["员工编号", "工资项", "金额"]]
             df_tex_extra.rename(columns={"金额": "财务计税附加"}, inplace=True)
             df_tex_extra["财务计税附加"] = df_tex_extra["财务计税附加"].astype(float)
-            print(df_tex_extra["财务计税附加"].dtypes)
             df_tex_extra = df_tex_extra.groupby("员工编号").sum()
 
             # 上月缴税明细信息导入
@@ -110,7 +109,7 @@ class Wage(object):
             # 出勤信息导入
             df_sap_workday = pd.read_sql_query(r"select * from t{}SapWorkday".format(self.date), self.conn) \
                 [["人员编号", "年假天数", "事假天数", "病假天数", "工伤假天数", "探亲假天数", "婚假天数", "丧假天数", "产假天数",
-                  "育儿假天数", "节育假天数", "旷工天数", "高温出勤", "有毒有害出勤", "工作补贴出勤", "节假日加班","加班天数", "中班天数", "夜班天数"]]
+                  "育儿假天数", "节育假天数", "旷工天数", "高温出勤", "有毒有害出勤", "工作补贴出勤", "节假日加班", "加班天数", "中班天数", "夜班天数"]]
             df_sap_workday.rename(columns={"人员编号": "员工编号"}, inplace=True)
 
             df_people_info = pd.read_sql_query(r"select * from t{}PeopleInfo".format(self.date), self.conn) \
@@ -183,7 +182,7 @@ class Wage(object):
                                    '累计住房贷款利息', '累计住房租金', '年假天数', '事假天数', '病假天数',
                                    '工伤假天数', '探亲假天数', '婚假天数', '丧假天数', '丧假天数',
                                    '产假天数', '育儿假天数', '节育假天数', '旷工天数', '高温出勤',
-                                   '有毒有害出勤', '工作补贴出勤', '节假日加班', "加班天数",'中班天数', '夜班天数', "上月岗位工资系数"
+                                   '有毒有害出勤', '工作补贴出勤', '节假日加班', "加班天数", '中班天数', '夜班天数', "上月岗位工资系数"
             , "累计应补(退)税额", "累计已预缴税额"]
         # list_need_change_format = ['岗序', '薪等', '岗位工资系数', '奖金系数', '预支年薪',
         #                            '岗位工资', '技能保留工资', '年功保留工资', '竞业津贴', '技术津贴',
@@ -231,7 +230,8 @@ class Wage(object):
         df_wage["岗位工资"] = df_wage["岗位工资系数"] * 360
 
         # 计算加班工资，等于上月工资系数/21.75*360*3*加班天数再加上日常加班
-        df_wage["加班工资"] = (df_wage["上月岗位工资系数"] / 21.75 * 3 * 360 * df_wage['节假日加班']).round(2)+(df_wage["上月岗位工资系数"] / 21.75 * 2 * 360 * df_wage['加班天数']).round(2)
+        df_wage["加班工资"] = (df_wage["上月岗位工资系数"] / 21.75 * 3 * 360 * df_wage['节假日加班']).round(2) + (
+                    df_wage["上月岗位工资系数"] / 21.75 * 2 * 360 * df_wage['加班天数']).round(2)
 
         # 中夜班津补贴
         df_wage["中班津贴"] = df_wage["中班天数"] * 10
@@ -252,9 +252,13 @@ class Wage(object):
         df_wage["扣班中餐补贴（产假）"] = (df_wage["班中餐补贴"] / self.workday * df_wage["产假天数"]).round(2)
         df_wage["扣误餐补贴（产假）"] = (df_wage["误餐补贴"] / self.workday * df_wage["产假天数"]).round(2)
         df_wage["扣技术津贴（产假）"] = (df_wage["技术津贴"] / self.workday * df_wage["产假天数"]).round(2)
-        df_wage["扣异地津贴（产假）"] = (df_wage["异地津贴"] / self.workday * df_wage["产假天数"]).round(2)
-        df_wage["扣异地差旅费（产假）"] = (df_wage["异地差旅费"] / self.workday * df_wage["产假天数"]).round(2)
-        df_wage["扣外租房津贴（产假）"] = (df_wage["外租房津贴"] / self.workday * df_wage["产假天数"]).round(2)
+        # 根据领导指示，产假不扣这三项了
+        df_wage["扣异地津贴（产假）"] = 0
+        # df_wage["扣异地津贴（产假）"] = (df_wage["异地津贴"] / self.workday * df_wage["产假天数"]).round(2)
+        df_wage["扣异地差旅费（产假）"] = 0
+        # df_wage["扣异地差旅费（产假）"] = (df_wage["异地差旅费"] / self.workday * df_wage["产假天数"]).round(2)
+        df_wage["扣外租房津贴（产假）"] = 0
+        # df_wage["扣外租房津贴（产假）"] = (df_wage["外租房津贴"] / self.workday * df_wage["产假天数"]).round(2)
 
         # 探亲假，探亲假不扣工资
         df_wage["扣竞业津贴（探亲假）"] = (df_wage["竞业津贴"] / self.workday * df_wage["探亲假天数"]).round(2)
@@ -319,16 +323,13 @@ class Wage(object):
                                                    "员工编号为{}的员工{}有病假，\n\r\t请输入其工龄".format(df_wage["员工编号"].at[i],
                                                                                          df_wage["姓名"].at[i]), min=0)
                     percent = floatReturnPercent(year)
-                    print(year,percent)
                     if ok:
-                        df_wage["扣工资（病假）"].at[i] = ((df_wage["岗位工资"].at[i] + df_wage["技能保留工资"].at[i]
-                                                     + df_wage["年功保留工资"].at[i]) / 21.75 * percent *
-                                                    df_wage["病假天数"].at[i]).round(2)
-                        print(((df_wage["岗位工资"].at[i] + df_wage["技能保留工资"].at[i]+ df_wage["年功保留工资"].at[i])))
-                        # print(df_wage["岗位工资"].at[i])
-                        # print(self.workday)
-                        # print(df_wage["病假天数"].at[i])
-                        # print(df_wage["扣工资（病假）"].at[i])
+                        wage_for_ill = (df_wage["岗位工资"].at[i] + df_wage["技能保留工资"].at[i] + df_wage["年功保留工资"].at[i])
+                        # 考虑和1520作对比
+                        wage_for_ill = wage_for_ill if wage_for_ill > 1520 else 1520
+                        # 计算病假扣款
+                        df_wage["扣工资（病假）"].at[i] = (wage_for_ill / self.workday * percent * df_wage["病假天数"].at[i]).round(2)
+
                         break
                     else:
                         QMessageBox.warning(self.window, "河钢乐亭薪酬管理系统", "取消后无法进行病假计算，请重新输入！", QMessageBox.Ok)
@@ -341,6 +342,7 @@ class Wage(object):
             工作补贴等于标准减去工作补贴扣减
         三 如果有异地津补贴，那么说明是宣钢职工，工作补贴为0
         """
+
         for i in df_wage["工作补贴"].index:
             if df_wage["工作补贴出勤"].at[i] > 0:
                 if df_wage["工作补贴出勤"].at[i] > self.workday:
@@ -413,7 +415,6 @@ class Wage(object):
             if not df_wage["员工编号"].at[i] in list_need_check_all_pay:
                 df_wage["应发工资"].at[i] = 1520 if df_wage["应发工资"].at[i] <= 1520 else df_wage["应发工资"].at[i]
 
-
         df_wage["其他补发"] = df_wage["其他补发"].round(2)
         df_wage["其他补扣"] = df_wage["其他补扣"].round(2)
         # 再次对应发工资进行处理，减去事假、旷工扣款、其他补扣，加上其他补发
@@ -427,7 +428,6 @@ class Wage(object):
         df_wage.loc[df_wage["是否享受公务员医疗待遇"] != "参照公务员补助医疗保险", "大额保险-企业"] = 9
 
         """下面开始计算个人所得税，完全按照财务系统的逻辑来进行计算"""
-        print(df_wage["财务计税附加"].dtypes)
         df_wage["系统工资税基"] = df_wage["应发工资"] - df_wage["大额保险-个人"] - df_wage["交通补贴"] * 0.7 + df_wage["财务计税附加"]
         # df_wage["系统工资税基"] = df_wage["应发工资"] - df_wage["大额保险-个人"] - df_wage["交通补贴"] * 0.7
 
@@ -508,7 +508,6 @@ class Wage(object):
 
         list_all_wage_lower_then_0 = df_wage.loc[df_wage["应发工资"] < 0, "员工编号"].values
         list_in_hand_wage_lower_then_0 = df_wage.loc[df_wage["实发工资"] < 0, "员工编号"].values
-        print(list_in_hand_wage_lower_then_0)
 
         # todo 应发工资小于0会造成实发工资小于0，进而造成工资汇总表上应发-各项扣缴！=实发工资，需要进行检查处理
         if len(list_all_wage_lower_then_0) > 0:
