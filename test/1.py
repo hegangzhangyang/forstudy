@@ -15,9 +15,8 @@ pd.set_option('display.max_columns', 100)
 pd.set_option('expand_frame_repr', False)
 conn = sqlite3.connect(r"..\db\workincome1.db")
 
-book = pd.read_excel("11月奖金自己手工帐.xlsx")
-book.fillna(0,inplace=True)
-book.to_sql("bouns201911", conn,index=False,if_exists="replace")
-
+# book = pd.read_excel("11月奖金自己手工帐.xlsx")
+# book.fillna(0,inplace=True)
+# book.to_sql("bouns201911", conn,index=False,if_exists="replace")
 
 

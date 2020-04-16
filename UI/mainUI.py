@@ -123,7 +123,7 @@ class MainWindow(QMainWindow, Ui_mainWindow):
 
         current_time = self.spinBox_year.text() + self.spinBox_month.text()
         file_name = QFileDialog.getOpenFileName(self, '打开文件', './')[0]
-        standrad_list = ["个人账号", "个人账户状态", "开户日期", "是否冻结", "个人缴存基数", "单位月缴额",
+        standrad_list = ["个人账号", "个人账户状态", "开户日期",  "个人缴存基数", "单位月缴额",
                          "个人月缴额", "月缴额", "缴至日期"]
         # 对文件进行内容格式进行检查
         if DataCheck.fileCheckWhole(self, file_name, standrad_list):

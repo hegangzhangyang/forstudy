@@ -314,6 +314,8 @@ class Wage(object):
         df_wage["扣误餐补贴（病假）"] = (df_wage["误餐补贴"] / self.workday * df_wage["病假天数"]).round(2)
         df_wage["扣技术津贴（病假）"] = (df_wage["技术津贴"] / self.workday * df_wage["病假天数"]).round(2)
 
+        # todo 育儿假规则
+
         # 病假扣工资比较复杂，需要先判断职工工作年限，确定比例然后再计算
         df_wage["扣工资（病假）"] = 0.0
         for i in df_wage["病假天数"].index:
@@ -428,8 +430,8 @@ class Wage(object):
         df_wage.loc[df_wage["是否享受公务员医疗待遇"] != "参照公务员补助医疗保险", "大额保险-企业"] = 9
 
         """下面开始计算个人所得税，完全按照财务系统的逻辑来进行计算"""
-        df_wage["系统工资税基"] = df_wage["应发工资"] - df_wage["大额保险-个人"] - df_wage["交通补贴"] * 0.7 + df_wage["财务计税附加"]
-        # df_wage["系统工资税基"] = df_wage["应发工资"] - df_wage["大额保险-个人"] - df_wage["交通补贴"] * 0.7
+        # df_wage["系统工资税基"] = df_wage["应发工资"] - df_wage["大额保险-个人"] - df_wage["交通补贴"] * 0.7 + df_wage["财务计税附加"]
+        df_wage["系统工资税基"] = df_wage["应发工资"] - df_wage["大额保险-个人"] - df_wage["交通补贴"] * 0.7
 
         df_wage["累计收入额"] = df_wage["累计收入额"] + df_wage["系统工资税基"]
 
@@ -542,7 +544,7 @@ class Wage(object):
 
         elif float_hourse_insurance.round() != float_hourse_insurance_2.round():
             raise DataFormatError(
-                "你可以继续生成明细表，汇总表。但请注意，工资明细表中的医疗保险缴纳数{}与医疗保险缴纳明细表中的金额{}不一致，请查明原因。".format(float_hourse_insurance,
+                "你可以继续生成明细表，汇总表。但请注意，工资明细表中的公积金缴纳数{}与公积金缴纳明细表中的金额{}不一致，请查明原因。".format(float_hourse_insurance,
                                                                                         float_hourse_insurance_2))
 
     def wage(self):
